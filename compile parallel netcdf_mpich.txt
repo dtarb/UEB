@@ -1,0 +1,42 @@
+
+0. Load modules for compiling
+  	At mt moran
+      		module load gnu/4.4.6
+      		module load mpich/3.0.4cd
+  	usu HPC
+      		reuse .mpich-3.1.1-slurm   
+   
+
+1. install zlib
+wget http://zlib.net/zlib-1.2.8.tar.giz
+
+configure --prefix=/path to /pnclibs
+
+make install
+
+2. to use pnetcdf build parallel-netcdf
+
+Get pnetcdf (https://trac.mcs.anl.gov/projects/parallel-netcdf)
+
+ ./configure --prefix=/path to /pnclibs
+
+
+3. build Hdf5 with zlib and enable-parallel
+
+LIBS=-ldl CC=mpicc ./configure --enable-parallel --prefix=/path to/pnclibs/lib --with-zlib=/path to pnclibs 
+
+
+6. build netcdf
+//add $LIBS=-ldl CC=mpicc --disable-shared  enable-parallel-tests CPPFLAGS=-I${H5DIR}/include LDFLAGS=-L${H5DIR}/lib 
+// --enable-pnetcdf for parallel on netcdf classic  
+
+LIBS=-ldl CC=mpicc LDFLAGS=-L/path to /pnclibs/lib CPPFLAGS=-I/path to pnclibs/include ./configure --disable-shared --enable-parallel-tests --enable-pnetcdf --prefix=/path to /pnclibs
+
+
+When linking a code (e.g. Parallel UEB) use 
+      -lpnetcdf -lhdf5_hl -lhdf5 -ldl -lm -lz -ldl
+
+
+
+
+
