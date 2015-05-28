@@ -34,7 +34,7 @@ LIBS=-ldl CC=mpicc ./configure --enable-parallel --prefix=/path to installation 
 
 make install
 
-6. build netcdf
+5. build netcdf
 
 LIBS=-ldl CC=mpicc LDFLAGS=-L/path to installation directory/lib CPPFLAGS=-I/path to installation directory/include ./configure --disable-shared --enable-parallel-tests --enable-pnetcdf --prefix=/path to installation directory
 
