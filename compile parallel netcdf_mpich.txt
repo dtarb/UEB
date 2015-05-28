@@ -6,15 +6,19 @@
   	usu HPC
       		reuse .mpich-3.1.1-slurm   
    
+1. install curl
+ ./configure --prefix=/path to installation directory
+ 
+make install
 
-1. install zlib
+2. install zlib
 wget http://zlib.net/zlib-1.2.8.tar.giz
 
  ./configure --prefix=/path to installation directory
 
 make install
 
-2. to use pnetcdf build parallel-netcdf
+3. to use pnetcdf build parallel-netcdf
 
 Get pnetcdf (https://trac.mcs.anl.gov/projects/parallel-netcdf)
 
@@ -22,7 +26,7 @@ Get pnetcdf (https://trac.mcs.anl.gov/projects/parallel-netcdf)
 
 make install
 
-3. build Hdf5 with zlib and enable-parallel
+4. build Hdf5 with zlib and enable-parallel
 
 Get HDF5 (https://www.hdfgroup.org/HDF5)
 
