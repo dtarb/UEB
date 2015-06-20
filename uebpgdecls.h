@@ -6,7 +6,6 @@
 #include <stdio.h>
 #include "mpi.h"
 #include <netcdf.h>
-#include <netcdf_par.h>
 #include <cmath>
 #include <set>
 #include <vector>
@@ -70,11 +69,8 @@ struct inptimeseries {
 //attributes are copied from the 2D (watershed) netCDF which the 3D netCDF spatial dimension follow
 int create3DNC_uebOutputs(const char* FileName, const char* VarName, const char *varUnits, const char* tName, const char* tUnits, const char* tlong_name,
 	const char* tcalendar, int Nt_dim, int dimOrd, float* t_inp, float *fillVal, const char* ws_FileName, const char* ws_VarName, const char* yName, const char* xName, MPI::Intracomm inpComm, MPI::Info inpInfo);
-//creates 3D netcdf and stores dimension variables for UEB aggregated outputs; some attributes are copied from the watershed netCDF
-int create3DNC_uebAggregatedOutputs(const char* FileName, aggOutput *aggOut, int naggOut, const char* tName, const char* tUnits, const char* tlong_name, const char* tcalendar, int Nt_dim, int dimOrd,
-	float* t_inp, float *fillVal, const char* ws_FileName, const char* ws_VarName, const char* yName, const char* xName, int nZones, const char * zName, float* y_inp, float* x_inp);
 //creates 3D netcdf in parallel and stores dimension variables for UEB aggregated outputs; some attributes are copied from the watershed netCDF
-int create3DNC_uebAggregatedOutputs_par(const char* FileName, aggOutput *aggOut, int naggOut, const char* tName, const char* tUnits, const char* tlong_name, const char* tcalendar, int Nt_dim, int dimOrd,
+int create3DNC_uebAggregatedOutputs(const char* FileName, aggOutput *aggOut, int naggOut, const char* tName, const char* tUnits, const char* tlong_name, const char* tcalendar, int Nt_dim, int dimOrd,
 	float* t_inp, float *fillVal, const char* ws_FileName, const char* ws_VarName, const char* yName, const char* xName, int nZones, const char * zName, float* y_inp, float* x_inp, MPI::Intracomm inpComm, MPI::Info inpInfo);
 //aggregate outputs at specified zone in the netcdf
 int Write_uebaggTS_toNC(const char* FileName, const char* VarName, int dimOrd, int z_dim, int Nt_dim, float* var_inp);

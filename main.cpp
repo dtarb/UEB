@@ -264,7 +264,7 @@ int main(int argc, char* argv[])
 		retvalue = create3DNC_uebOutputs(ncOut[icout].outfName, (const char*)ncOut[icout].symbol, (const char*)ncOut[icout].units, tNameout, tUnitsout,
 			tlong_name, tcalendar, outtSteps, outDimord, t_out, &out_fillVal, watershedFile, wsvarName, wsycorName, wsxcorName, worldComm, worldInfo);
 	//create aggregate ouput file
-	retvalue = create3DNC_uebAggregatedOutputs_par(aggoutputFile, aggOut, naggout, tNameout, tUnitsout, tlong_name, tcalendar, outtSteps, aggoutDimord, t_out, &out_fillVal,
+	retvalue = create3DNC_uebAggregatedOutputs(aggoutputFile, aggOut, naggout, tNameout, tUnitsout, tlong_name, tcalendar, outtSteps, aggoutDimord, t_out, &out_fillVal,
 		watershedFile, wsvarName, wsycorName, wsxcorName, nZones, zName, z_ycor, z_xcor, worldComm, worldInfo);
 
 	outputWrite_Time += (MPI::Wtime() - intermStart_Time);
