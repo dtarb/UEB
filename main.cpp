@@ -107,15 +107,12 @@ int main(int argc, char* argv[])
 	}
 	FILE* pconFile = fopen(conFile, "rt");
 	fgets(headerLine, 256, pconFile);
-	fscanf(pconFile, "%s\n %s\n %s\n %s\n %s\n", paramFile1, sitevarFile1, inputconFile1, outputconFile1, watershedFile1);
+	fscanf(pconFile, "%s\n %s\n %s\n %s\n %s\n %s\n", paramFile1, sitevarFile1, inputconFile1, outputconFile1, aggoutputFile1, watershedFile1);
 	fscanf(pconFile, "%s %s %s\n", wsvarName1, wsycorName1, wsxcorName1);
-	fscanf(pconFile, "%s\n %s\n", aggoutputconFile1, aggoutputFile1);
 	//new vs2012 appears to have issues with passing char[256] for const char*
-	const char *paramFile = paramFile1, *sitevarFile = sitevarFile1, *inputconFile = inputconFile1, *outputconFile = outputconFile1, *watershedFile = watershedFile1,
-		*wsvarName = wsvarName1, *wsycorName = wsycorName1, *wsxcorName = wsxcorName1, *aggoutputconFile = aggoutputconFile1, *aggoutputFile = aggoutputFile1;
+	const char *paramFile = paramFile1, *sitevarFile = sitevarFile1, *inputconFile = inputconFile1, *outputconFile = outputconFile1, *aggoutputFile = aggoutputFile1,
+		*watershedFile = watershedFile1, *wsvarName = wsvarName1, *wsycorName = wsycorName1, *wsxcorName = wsxcorName1;
 	//read simulation related parameters including start and end datetimes, and model time step dt
-	//#_14 tbc 5.20.13 check time format
-	//fscanf(pconFile,"%f\n%f\n%f\n%f\n",startTime, endTime, dT, UTC_offset);
 	fscanf(pconFile, "%d %d %d %lf\n", &ModelStartDate[0], &ModelStartDate[1], &ModelStartDate[2], &ModelStartHour);
 	fscanf(pconFile, "%d %d %d %lf\n", &ModelEndDate[0], &ModelEndDate[1], &ModelEndDate[2], &ModelEndHour);
 	fscanf(pconFile, "%lf\n %lf\n %d\n %d %d %d\n %d %d\n", &ModelDt, &ModelUTCOffset, &inpDailyorSubdaily, &outtStride, &outyStep, &outxStep, &outDimord, &aggoutDimord);
@@ -144,7 +141,8 @@ int main(int argc, char* argv[])
 	std::set<int> zValues(wsArray1D, wsArray1D + (dimlen1*dimlen2));
 	//cout << zValues.size() << endl;
 	//std::remove_if(zValues.begin(), zValues.end(), [&wsfillVal](int a){ return a == wsfillVal; });
-	std::set<int> fillSet = { wsfillVal };
+	std::set<int> fillSet;
+    fillSet.insert (wsfillVal);
 	//cout << "fill: " << fillSet.size() << " value: " << *(fillSet.begin())<<endl;
 	std::vector<int> zVal(zValues.size());
 	std::vector<int>::iterator it = std::set_difference(zValues.begin(), zValues.end(), fillSet.begin(), fillSet.end(), zVal.begin());  // exclude _FillValue
@@ -220,7 +218,7 @@ int main(int argc, char* argv[])
 	//total grid size to compute progress
 	totalgrid = dimlen1*dimlen2;
 	//output control
-	readOutputControl(outputconFile, aggoutputconFile, pOut, ncOut, aggOut, npout, nncout, naggout);
+	readOutputControl(outputconFile, pOut, ncOut, aggOut, npout, nncout, naggout);
 	//create output netcdf
 	outtSteps = numTimeStep / outtStride;             //save SWE every outstrid'th t-step
 	t_out = new float[outtSteps];

@@ -138,6 +138,10 @@ void RUNUEB(float* RegArray[13], float statesiteValues[], float paramValues[], f
 		  Day = modelStartDate[2];          
           sHour = modelStartHour;
           currentModelDateTime = julian(Year, Month, Day, sHour);
+		  //double dlastD = Day, dlastH = dHour;
+		  double modelSpan = EJD - currentModelDateTime;		  
+		  //model time steps
+		  int numTotalTs = (int)ceil(modelSpan*(24 / modelDT));
 		  
           //++++++++++++++++++++This is the start of the main time loop++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++                             
 		  while(EJD >= currentModelDateTime)
@@ -158,32 +162,32 @@ void RUNUEB(float* RegArray[13], float statesiteValues[], float paramValues[], f
 		  //      Map from wrapper input variables to UEB variables     
 			   if ( inpDailyorSubdaily == 0)       //inputs are given for each time step (sub-daily time step)--in m/hr units 
 			   {	
-				P = RegArray[1][istep];
-				V = RegArray[2][istep];
-				   Ta =RegArray[0][istep];
-
-				//get min max temp
-				Tmax = RegArray[0][istep];
-				Tmin = RegArray[0][istep];
-				Trange = 8;
-//get max/min temperature during the day 
-				 nb = (dHour - 0)/modelDT;		 //number of time steps before current time within same day
-				 nf = (24 - dHour)/modelDT;      //no of time steps after current time within the same day
-//#_TBC 9.13.13 look for better method for the following
-				 if(dHour > 23)                  //to take care of hour 24, <=>0hr
-				 {
-					 nb = 0;
-					 nf = 24/modelDT;
-				 }
-				 nbstart = findMax(istep-nb,0);  //to gard against going out of lower bound near start time when the start time isnot 0 hr (istep < nb )
-				 nfend = istep + nf;
+				   P = RegArray[0][istep];                               // / 24000;   #12.19.14 --Daymet prcp in mm/day				             
+				   Ta =RegArray[1][istep];
+				   V = RegArray[4][istep];
+				   //get min max temp
+				   Tmin = RegArray[2][istep]; 
+				   Tmax = RegArray[3][istep];
+				   
+				   Trange = 8;
+				   //get max/min temperature during the day 
+				   nb = (dHour - 0)/modelDT;		 //number of time steps before current time within same day
+				   nf = (24 - dHour)/modelDT;      //no of time steps after current time within the same day
+				   //#_TBC 9.13.13 look for better method for the following
+				   if(dHour > 23)                  //to take care of hour 24, <=>0hr
+				   {
+					   nb = 0;
+					   nf = 24/modelDT;
+				   }
+				   nbstart = findMax(istep-nb,0);  //to guard against going out of lower bound near start time when the start time is not 0 hr (istep < nb )
+				   nfend = findMin(istep + nf, numTotalTs - 1); //don't go out of upper limit		
 				
 				for (int it = nbstart; it < nfend; ++it)
 				{
-					if (RegArray[0][it] <= Tmin)					
-						Tmin = RegArray[0][it];
-				    if (RegArray[0][it] >= Tmax)					
-						Tmax = RegArray[0][it];
+					   if (RegArray[1][it] <= Tmin)					
+						   Tmin = RegArray[1][it];
+					   if (RegArray[1][it] >= Tmax)					
+						   Tmax = RegArray[1][it];
 				}
 				Trange = Tmax - Tmin;
 				//cout<<Trange<<endl;
@@ -206,24 +210,24 @@ void RUNUEB(float* RegArray[13], float statesiteValues[], float paramValues[], f
  				switch(irad)
 				{
 					case 0:
-						Qsiobs = RegArray[5][1];
-						Qli = RegArray[6][1];
-						Qnetob = RegArray[7][1];						
+					   Qsiobs = RegArray[8][1];
+					   Qli = RegArray[9][1];
+					   Qnetob = RegArray[10][1];						
 						break;
 					case 1:
-					   Qsiobs = RegArray[5][istep];                         // *3.6; // Daymet srad in W/m^2
-						Qli = RegArray[6][1];
-						Qnetob = RegArray[7][1];
+					   Qsiobs = RegArray[8][istep];                         // *3.6; // Daymet srad in W/m^2
+					   Qli = RegArray[9][1];
+					   Qnetob = RegArray[10][1];
 						break;
 					case 2:
-					   Qsiobs = RegArray[5][istep];                         // *3.6; // Daymet srad in W/m^2
-						Qli = RegArray[6][istep];
-						Qnetob = RegArray[7][1];
+					   Qsiobs = RegArray[8][istep];                         // *3.6; // Daymet srad in W/m^2
+					   Qli = RegArray[9][istep];
+					   Qnetob = RegArray[10][1];
 						break;
 					case 3:
-						Qsiobs = RegArray[5][1];
-						Qli = RegArray[6][1];
-						Qnetob = RegArray[7][istep];
+					   Qsiobs = RegArray[8][1];
+					   Qli = RegArray[9][1];
+					   Qnetob = RegArray[10][istep];
 						break;
 					default:
 						cout<<" The radiation flag is not the right number; must be between 0 and 3"<<endl;
@@ -231,58 +235,59 @@ void RUNUEB(float* RegArray[13], float statesiteValues[], float paramValues[], f
 						break;				
 				}
 				//atm. pressure from netcdf 10.30.13
-				//this needs revision 		//####TBC_6.20.13
-				if(RegArray[4][0] == 2)
-					sitev[1] = RegArray[4][1];
-				else
-					sitev[1] = RegArray[4][istep];
+				   //this may need revision 		//####TBC_6.20.13
+				   if(RegArray[7][0] == 2)
+					   sitev[1] = RegArray[7][1];
+				   else
+					   sitev[1] = RegArray[7][istep];
 
-				//this needs revision 		//####TBC_6.20.13
-				if(RegArray[8][0] == 2)
-					Qg = RegArray[8][1];
-				else
-					Qg = RegArray[8][istep];
-				 //!     Flag to control albedo (ireadalb)  
+				   //this may need revision 		//####TBC_6.20.13
+				   if(RegArray[11][0] == 2)
+					   Qg = RegArray[11][1];
+				   else
+					   Qg = RegArray[11][istep];
+				   //!     Flag to control albedo (ireadalb)  
 				//!     0 is no measurements - albedo estimated internally
                 //!     1 is albedo read from file (provided: measured or obtained from another model)
 				//these need revision //####TBC_6.20.13
-				if(RegArray[9][0] == 2)
-					Snowalb = RegArray[9][1];
-				else
-					Snowalb = RegArray[9][istep];					
-				   //12.18.14 Vapor pressure of air
 				   if(RegArray[12][0] == 2)
-					   Vp = RegArray[12][1];
+					   Snowalb = RegArray[12][1];
 				   else
-					   Vp = RegArray[12][istep];
+					   Snowalb = RegArray[12][istep];	
+
+				   //12.18.14 Vapor pressure of air
+				   if(RegArray[6][0] == 2)
+					   Vp = RegArray[6][1];
+				   else
+					   Vp = RegArray[6][istep];
 				   //relative humidity computed or read from file
-				   //#12.18.14 needs revision
-				   if (RegArray[3][0] == 2)
+				   //#12.18.14 may need revision
+				   if (RegArray[5][0] == 2)
 				   {
-					   RH = RegArray[3][1];					   
+					   RH = RegArray[5][1];					   
 				   }
-				   else if (RegArray[3][0] == -1)          //RH computed internally 
+				   else if (RegArray[5][0] == -1)          //RH computed internally 
 				   {
 					   float eSat = 611 * exp(17.27*Ta / (Ta + 237.3)); //Pa
 					   RH = Vp / eSat;
 				   }
 				   else
-					   RH = RegArray[3][istep];
+					   RH = RegArray[5][istep];
 				   if (RH > 1)
 				   {
 					   //cout<<"relative humidity >= 1 at time step "<<istep<<endl;
 					   RH = 0.99;
 				   }
 			   }   
-			   else		//inputs are given as average daily values, precip unit is always m/hr, Tmax and Tmin are manadatory       
+			   else		//inputs are given as AVERAGE daily values, precip unit is always m/hr, Tmax and Tmin are required
 			   {
 				   //average daily value of precip in units of m/hr 4.22.14
-				   P = RegArray[1][istep / nstepinaDay];            // 24000; //#12.19.14 Daymet prcp in mm/day           
-				   V = RegArray[2][istep/nstepinaDay];
+				   P = RegArray[0][istep / nstepinaDay];            // /24000 #12.19.14 Daymet prcp in mm/day           
+				   V = RegArray[4][istep/nstepinaDay];
 				    
 				   //get min max temp
-				   Tmin = RegArray[10][istep/nstepinaDay];				  
-				   Tmax = RegArray[11][istep/nstepinaDay];
+				   Tmin = RegArray[2][istep/nstepinaDay];				  
+				   Tmax = RegArray[3][istep/nstepinaDay];
 				   //cout << "Tmin = " << Tmin << "Tmax = " << Tmax << " ";
 
 				   Trange = Tmax - Tmin;
@@ -307,24 +312,24 @@ void RUNUEB(float* RegArray[13], float statesiteValues[], float paramValues[], f
 				   switch(irad)
 				   {
 				   case 0:
-					   Qsiobs = RegArray[5][1];
-					   Qli = RegArray[6][1];
-					   Qnetob = RegArray[7][1];						
+					   Qsiobs = RegArray[8][1];
+					   Qli = RegArray[9][1];
+					   Qnetob = RegArray[10][1];						
 					   break;
 				   case 1:
-					   Qsiobs = RegArray[5][istep / nstepinaDay];                 // *3.6; // Daymet srad in W/m^2
-					   Qli = RegArray[6][1];
-					   Qnetob = RegArray[7][1];
+					   Qsiobs = RegArray[8][istep / nstepinaDay];                 // *3.6; // Daymet srad in W/m^2
+					   Qli = RegArray[9][1];
+					   Qnetob = RegArray[10][1];
 					   break;
 				   case 2:
-					   Qsiobs = RegArray[5][istep / nstepinaDay];                 // *3.6; // Daymet srad in W/m^2
-					   Qli = RegArray[6][istep/nstepinaDay];
-					   Qnetob = RegArray[7][1];
+					   Qsiobs = RegArray[8][istep / nstepinaDay];                 // *3.6; // Daymet srad in W/m^2
+					   Qli = RegArray[9][istep/nstepinaDay];
+					   Qnetob = RegArray[10][1];
 					   break;
 				   case 3:
-					   Qsiobs = RegArray[5][1];
-					   Qli = RegArray[6][1];
-					   Qnetob = RegArray[7][istep/nstepinaDay];
+					   Qsiobs = RegArray[8][1];
+					   Qli = RegArray[9][1];
+					   Qnetob = RegArray[10][istep/nstepinaDay];
 					   break;
 				   default:
 					   cout<<" The radiation flag is not the right number; must be between 0 and 3"<<endl;
@@ -332,43 +337,43 @@ void RUNUEB(float* RegArray[13], float statesiteValues[], float paramValues[], f
 					   break;				
 				   }
 				   //atm. pressure from netcdf 10.30.13
-				   //this needs revision 		//####TBC_6.20.13
-				   if(RegArray[4][0] == 2)
-					   sitev[1] = RegArray[4][1];
+				   //this may need revision 		//####TBC_6.20.13
+				   if(RegArray[7][0] == 2)
+					   sitev[1] = RegArray[7][1];
 				   else
-					   sitev[1] = RegArray[4][istep/nstepinaDay];
+					   sitev[1] = RegArray[7][istep/nstepinaDay];
 
-				   //this needs revision 		//####TBC_6.20.13
-				   if(RegArray[8][0] == 2)
-					   Qg = RegArray[8][1];
+				   //this may need revision 		//####TBC_6.20.13
+				   if(RegArray[11][0] == 2)
+					   Qg = RegArray[11][1];
 				   else
-					   Qg = RegArray[8][istep/nstepinaDay];
+					   Qg = RegArray[11][istep/nstepinaDay];
 				   //!     Flag to control albedo (ireadalb)  
 				   //!     0 is no measurements - albedo estimated internally
 				   //!     1 is albedo read from file (provided: measured or obtained from another model)
 				   //these need revision //####TBC_6.20.13
-				   if(RegArray[9][0] == 2)
-					   Snowalb = RegArray[9][1];
+				   if(RegArray[12][0] == 2)
+					   Snowalb = RegArray[12][1];
 				   else
-					   Snowalb = RegArray[9][istep/nstepinaDay];
+					   Snowalb = RegArray[12][istep/nstepinaDay];
 				   //12.18.14 Vapor pressure of air
-				   if (RegArray[12][0] == 2)
-					   Vp = RegArray[12][1];
+				   if (RegArray[6][0] == 2)
+					   Vp = RegArray[6][1];
 				   else
-					   Vp = RegArray[12][istep/nstepinaDay];
+					   Vp = RegArray[6][istep/nstepinaDay];
 				   //relative humidity computed or read from file
-				   //#12.18.14 needs revision
-				   if (RegArray[3][0] == 2)
+				   //#12.18.14 may need revision
+				   if (RegArray[5][0] == 2)
 				   {
-					   RH = RegArray[3][1];
+					   RH = RegArray[5][1];
 				   }
-				   else if (RegArray[3][0] == -1)          //RH computed internally 
+				   else if (RegArray[5][0] == -1)          //RH computed internally 
 				   {
 					   float eSat = 611 * exp(17.27*Ta / (Ta + 237.3)); //Pa
 					   RH = Vp / eSat;
 				   }
 				   else
-					   RH = RegArray[3][istep/nstepinaDay];
+					   RH = RegArray[5][istep/nstepinaDay];
 				   if (RH > 1)
 				   {
 					   //cout<<"relative humidity >= 1 at time step "<<istep<<endl;
@@ -519,7 +524,9 @@ void RUNUEB(float* RegArray[13], float statesiteValues[], float paramValues[], f
 					OutArr[i] = 0.0;
 				for (int i= 0;i <70;i++)
 					OutVarValues[i][istep] = 0.0;              
-		   }          
+		   }     
+		   //dlastH = dHour;
+		   //dlastD = Day;
 		
 			istep++;				
 			UPDATEtime(Year, Month, Day, dHour,modelDT);  			
@@ -527,6 +534,8 @@ void RUNUEB(float* RegArray[13], float statesiteValues[], float paramValues[], f
             currentModelDateTime = julian(Year, Month, Day, dHour); 
 
 	   }  //End of the main time loop 
+	  //cout << " final step day and hour " << istep << " "<<Day<<"  "<<dlastH<<endl;
+	  //cout << " final year month day hour = " << Year << " " << Month << " " << Day << "  "<<dHour<<endl;
 	   
 	   delete []tsprevday;
 	   delete []taveprevday;  

@@ -121,7 +121,7 @@ void readSiteVars(const char* inpFile, sitevar svArr[], int indx);
 void readSiteVars(const char* inpFile, sitevar *&svArr);
 void readSiteVars(const char* inpFile, float svSValue[], char* svFile[], char* svVarName[], int svType[] );
 void readInputForcVars(const char* inputconFile, inpforcvar *frArray);
-void readOutputControl(const char* outputconFile, const char* aggoutputconFile, pointOutput* &pOut, ncOutput* &ncOut, aggOutput* &aggOut, int &npout, int &nncout, int &naggOut);
+void  readOutputControl(const char* outputconFile, pointOutput* &pOut, ncOutput* &ncOut, aggOutput* &aggOut, int &npout, int &nncout, int &naggOut);
 //void readTextData(const char* inforcFile, inptimeseries* &strinpts, int &nrecords);
 void readTextData(const char* inforcFile, float *&tcor_var, float *&tvar_in, int &nrecords);  
 void readTextData(const char* inforcFile, float *&tvar_in, int &nrecords);
@@ -326,3 +326,4 @@ float ALBEDO(float tausn, float coszen, float d, float aep,float abg, float avo,
 void AGESN(float &tausn, float dt, float Ps, float tsurf, float tk, float dNewS);
 //     Partitioning of precipitation into rain and snow      
 float PARTSNOW(float P, float TA, float TR, float TS);
+ 

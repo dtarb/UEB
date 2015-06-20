@@ -277,7 +277,7 @@ void readInputForcVars(const char* inputconFile, inpforcvar *frArr)
 }
 
 //output control file: details of point, distributed netcdf, aggregated netcdf outputs 
-void readOutputControl(const char* outputconFile, const char* aggoutputconFile, pointOutput* &pOut, ncOutput* &ncOut, aggOutput* &aggOut, int &npout, int &nncout, int &naggOut)
+void readOutputControl(const char* outputconFile, pointOutput* &pOut, ncOutput* &ncOut, aggOutput* &aggOut, int &npout, int &nncout, int &naggOut)
 {
 	ifstream poutFile(outputconFile);
 	char headerLine[256];
@@ -304,21 +304,21 @@ void readOutputControl(const char* outputconFile, const char* aggoutputconFile, 
 		poutFile.getline(headerLine, 256);
 		sscanf(headerLine, "%s %s %s ", &ncOut[i].symbol, &ncOut[i].outfName, &ncOut[i].units);
 	}	
-	poutFile.close();
+	//poutFile.close();
 	//aggregated outputs
-	ifstream paoutFile(aggoutputconFile);
-	paoutFile.getline(headerLine, 256);   //skip header	
-	paoutFile.getline(headerLine, 256);
+	//ifstream paoutFile(aggoutputconFile);
+	//paoutFile.getline(headerLine, 256);   //skip header	
+	poutFile.getline(headerLine, 256);
 	sscanf(headerLine, "%d ", &nout);
 	naggOut = nout;
 	aggOut = new aggOutput[nout];
 	for (int i = 0; i < nout; i++)
 	{
-		paoutFile.getline(headerLine, 256);
+		poutFile.getline(headerLine, 256);
 		sscanf(headerLine, "%s %s %s ", &aggOut[i].symbol, &aggOut[i].units, &aggOut[i].aggop);
 	}	
-	paoutFile.close();
-
+	poutFile.close();
+	//paoutFile.close();
 	return;
 }
 
@@ -387,10 +387,37 @@ void readTextData(const char* inforcFile, float *&tvar_in, int &nrecords)
 	}
 
 	inputFile.close();
+    //for(int i=0; i< 100; i++)
+	//	printf(" %f ", tvar_in[i]);
+    //printf(" \n");
+}// __host__ __device__  void    readTextData
 
-}//void readTextData
+//function to read input forcing time series text file
+void  readTStextFile(const char* inforcFile, float *&tvar_in, int &nrecords)
+{
+	FILE* inputFile = fopen(inforcFile, "r");
+	nrecords = 0;
+	char commentLine[256];                    //string to read header line
 
+	while (!feof(inputFile))
+	{
+		commentLine[0] = ' ';
+		fgets(commentLine, 256, inputFile);
+		if (commentLine[0] != ' ')  //condition to make sure empty line is not read; 
+			++nrecords;
+	}//while(!feof(inputfile)) 
 
+	//strinpts = new inptimeseries[nrecords];                //assign memory to store data records
 
+	tvar_in = new float[nrecords];
 
+	rewind(inputFile);
 
+	fgets(commentLine, 256, inputFile);                     //skip the comment lines              
+	for (int i = 0; i<nrecords; i++)
+		//#_15 check format of dtime here
+		fscanf(inputFile, "%*d %*d %*d %*d %f \n", &tvar_in[i]);
+
+	fclose(inputFile);
+
+}//   readTextData
