@@ -1,0 +1,38 @@
+CXX = g++
+MPICXX = mpicxx 
+CUDAXX = nvcc 
+
+CUDAFLAGS =  -x cu -arch=sm_30 -Xptxas -O1 -dc -lineinfo --expt-relaxed-constexpr
+
+CUDALFLAGS =  -arch=sm_30 -Xptxas -O1 -dlink --expt-relaxed-constexpr
+
+CXXFLAGS = -std=c++11 -g  -Wall 
+
+LINKFLAGS = -std=c++11 -g
+LIBDIRS = -L/usr/local/lib
+###LIBDIRS = -L$(NETCDFC_LIBDIR) -L$(CUDA_LIBDIR) -L$(HOME)/codes/lib
+
+LDFLAGS = -lnetcdf -lhdf5_hl -lhdf5 -lcurl -lm -lz -ldl -lcudart
+#LDFLAGS = -lpnetcdf -lnetcdf -lhdf5_hl -lhdf5 -lm -lz -ldl -lmpi -lmpicxx
+
+###INCDIRS = -I$(HOME)/codes/include -I$(NETCDFC_INCDIR) -I$(CUDA_INCDIR) -I$(BOOSTINCLUDEDIR)
+INCDIRS = -I/usr/local/include
+TARGET = uebgpu
+
+CXX_SRCS = gpumain.cpp gpucanopy.cpp gpumatrixnvector.cpp gpuncfunctions.cpp gpusnowdgtv.cpp gpusnowdv.cpp gpusnowxv.cpp gpuuebdecls.cpp gpuuebinputs.cpp
+
+OBJS = $(CXX_SRCS:.cpp=.o)
+
+$(TARGET) : $(OBJS)
+	$(CUDAXX) $(CUDALFLAGS) $(LINKFLAGS) -o $@ $^ $(LIBDIRS) $(LDFLAGS)
+#$(MPICXX) $(LINKFLAGS) -o $@ $^ $(LIBDIRS) $(LDFLAGS)
+
+%.o : %.cpp
+	$(CUDAXX) $(CUDAFLAGS) $(CXXFLAGS) $(INCDIRS) $< -o $@
+
+
+.PHONY: clean
+
+clean:
+	$(RM) $(OBJS) 
+#$(TARGET)
