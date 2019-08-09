@@ -85,3 +85,26 @@ void Delete3DArray(float ***A, int nt, int nr, int nc)            //input: A mat
 
 	return;
 }//void DeleteMatrix
+
+//for int
+//create 2D array and allocate contiguous memory block this enbales a full block read of netcdf
+int** create2DArray_Contiguous_int(int nr, int nc)      //inputs: no. of rows and no. of colos , height/time (dimensions) of matrix
+{
+	int** myMatrix = new int* [nr];
+	int* ptrMemory = new int[nr * nc];
+	for (int r = 0; r < nr; r++)
+	{
+		myMatrix[r] = ptrMemory; //new float*[nr];  
+		ptrMemory += nc;
+	}
+	return myMatrix;
+}//float*** create3DArrayblock
+
+//delets a 2D array (frees memory allocated) contiguously
+void delete2DArray_Contiguous_int(int** myMatrix) // int nr, int nc)// input: 2D array
+{
+	delete[] myMatrix[0];
+	delete[] myMatrix;
+
+	return;
+}//double** 

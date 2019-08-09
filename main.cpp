@@ -105,13 +105,16 @@ int main(int argc, char* argv[])
 		return 1;
 		//cin >> conFile;
 	}
+
 	FILE* pconFile = fopen(conFile, "rt");
 	fgets(headerLine, 256, pconFile);
 	fscanf(pconFile, "%s\n %s\n %s\n %s\n %s\n %s\n", paramFile1, sitevarFile1, inputconFile1, outputconFile1, aggoutputFile1, watershedFile1);
 	fscanf(pconFile, "%s %s %s\n", wsvarName1, wsycorName1, wsxcorName1);
+	
 	//new vs2012 appears to have issues with passing char[256] for const char*
-	const char *paramFile = paramFile1, *sitevarFile = sitevarFile1, *inputconFile = inputconFile1, *outputconFile = outputconFile1, *aggoutputFile = aggoutputFile1,
-		*watershedFile = watershedFile1, *wsvarName = wsvarName1, *wsycorName = wsycorName1, *wsxcorName = wsxcorName1;
+	const char* paramFile = paramFile1, * sitevarFile = sitevarFile1, * inputconFile = inputconFile1, * outputconFile = outputconFile1, * aggoutputFile = aggoutputFile1,
+		* watershedFile = watershedFile1, * wsvarName = wsvarName1, * wsycorName = wsycorName1, * wsxcorName = wsxcorName1;
+
 	//read simulation related parameters including start and end datetimes, and model time step dt
 	fscanf(pconFile, "%d %d %d %lf\n", &ModelStartDate[0], &ModelStartDate[1], &ModelStartDate[2], &ModelStartHour);
 	fscanf(pconFile, "%d %d %d %lf\n", &ModelEndDate[0], &ModelEndDate[1], &ModelEndDate[2], &ModelEndHour);
@@ -124,15 +127,42 @@ int main(int argc, char* argv[])
 	int mmMod = (int)(remainder(ModelStartHour, 1.0) * 60);
 	sprintf(tunits, "hours since %d-%d-%d %d:%d:00 UTC", ModelStartDate[0], ModelStartDate[1], ModelStartDate[2], hhMod, mmMod);
 	const char* tUnitsout = tunits;
-	//read watershed (model domain) netcdf file	
-	retvalue = readwsncFile(watershedFile, wsvarName, wsycorName, wsxcorName, wsycorArray, wsxcorArray, wsArray, dimlen1, dimlen2, wsfillVal, worldComm, worldInfo);
-	//cout<<"dim1 = "<<dimlen1<<" dim2 = "<< dimlen2<<endl;
-	/*printf("fillvalue= %d ",wsfillVal);
-	for(int i=0;i<dimlen1;i++){
-	for(int j=0;j<dimlen2;j++)
-	cout<<wsArray[i][j];
-	cout<<"\n";
-	}*/
+
+//7.25.19 for param, site variables in nc root process reads and broadcasts
+		
+	if (rank == 0)
+	{
+		//read watershed (model domain) netcdf file
+		//retvalue = readwsncFile(watershedFile, wsvarName, wsycorName, wsxcorName, wsycorArray, wsxcorArray, wsArray, dimlen1, dimlen2, wsfillVal, worldComm, worldInfo);
+		retvalue = readwsncFile(watershedFile, wsvarName, wsycorName, wsxcorName, wsycorArray, wsxcorArray, wsArray, dimlen1, dimlen2, wsfillVal); // , worldComm, worldInfo);
+
+		//cout<<"dim1 = "<<dimlen1<<" dim2 = "<< dimlen2<<endl;
+		/*printf("fillvalue= %d ",wsfillVal);
+		for(int i=0;i<dimlen1;i++){
+		for(int j=0;j<dimlen2;j++)
+		cout<<wsArray[i][j];
+		cout<<"\n";
+		}*/
+	}
+//broadcast ws values
+	//wsxcorArray = create2DArray_Contiguous_int(Nydim, Nxdim);
+	MPI::COMM_WORLD.Bcast(&dimlen1, 1, MPI::INT, 0);
+	MPI::COMM_WORLD.Bcast(&dimlen2, 1, MPI::INT, 0);
+	MPI::COMM_WORLD.Bcast(&wsfillVal, 1, MPI::INT, 0);
+	if (rank != 0)
+	{
+		wsycorArray = new float[dimlen1];
+		wsxcorArray = new float[dimlen2];
+		wsArray = create2DArray_Contiguous_int(dimlen1, dimlen2);
+		/*new int* [dimlen1];
+		for (size_t j = 0; j < dimlen1; j++)
+			wsArray[j] = new int[dimlen2];
+		*/
+	}
+	MPI::COMM_WORLD.Bcast(&wsycorArray[0], dimlen1, MPI::FLOAT, 0);
+	MPI::COMM_WORLD.Bcast(&wsxcorArray[0], dimlen2, MPI::FLOAT, 0);
+	MPI::COMM_WORLD.Bcast(&wsArray[0][0], dimlen1* dimlen2, MPI::INT, 0);
+
 	//aggregation zone info
 	float * wsArray1D = new float[dimlen1*dimlen2];
 	for (int i = 0; i < dimlen1; i++)
@@ -173,17 +203,31 @@ int main(int argc, char* argv[])
 	cout<<"%f ",strsvArray[i].svdefValue);
 	cout<<"\n");*/
 	for (int i = 0; i < 32; i++)
-	if (strsvArray[i].svType == 1)
 	{
-		//cout<<"%d %s %s\n",i, strsvArray[i].svFile,strsvArray[i].svVarName);
-		retvalue = read2DNC(strsvArray[i].svFile, strsvArray[i].svVarName, strsvArray[i].svArrayValues, worldComm, worldInfo);
-
-		/*for(int ih=0;ih<13;ih++)
+		if (strsvArray[i].svType == 1)
 		{
-		for(int jv=0;jv<16;jv++)
-		cout<<"%f ",strsvArray[i].svArrayValues[ih][jv]);
-		cout<<"\n");
-		}*/
+			//cout<<"%d %s %s\n",i, strsvArray[i].svFile,strsvArray[i].svVarName);
+			if (rank == 0)
+			{
+				//retvalue = read2DNC(strsvArray[i].svFile, strsvArray[i].svVarName, strsvArray[i].svArrayValues, worldComm, worldInfo);
+				retvalue = read2DNC(strsvArray[i].svFile, strsvArray[i].svVarName, strsvArray[i].svArrayValues);
+				/*for(int ih=0;ih<13;ih++)
+				{
+				for(int jv=0;jv<16;jv++)
+				cout<<"%f ",strsvArray[i].svArrayValues[ih][jv]);
+				cout<<"\n");
+				}*/
+			}
+			else 
+			{
+				strsvArray[i].svArrayValues = create2DArray_Contiguous(dimlen1, dimlen2);
+				/*strsvArray[i].svArrayValues = new float* [dimlen1];
+				for (size_t j = 0; j < dimlen1; j++)
+					strsvArray[i].svArrayValues[j] = new float[dimlen2];
+				*/
+			}
+			MPI::COMM_WORLD.Bcast(&strsvArray[i].svArrayValues[0][0], dimlen1* dimlen2, MPI::FLOAT, 0);
+		}
 	}
 	paramSite_Time += (MPI::Wtime() - intermStart_Time);
 	intermStart_Time = MPI::Wtime();
@@ -598,19 +642,25 @@ int main(int argc, char* argv[])
 	intermStart_Time = MPI::Wtime();
 	//MPI::COMM_WORLD.Barrier();
 	//cout<<"Process "<<rank<<" starting deallocating memory"<<endl;	
+
 	//deallocate memory ====#_*_#______Needs revisiting; some of the arrays are not deleted 6.23.13
-	for (int i = 0; i < dimlen1; i++)
+	
+	delete2DArray_Contiguous_int(wsArray);
+	/*for (int i = 0; i < dimlen1; i++)
 		delete[] wsArray[i];
 	delete[] wsArray;
+	*/
 
 	delete[] parvalArray;
 	for (int i = 0; i < 32; i++)
 	{
 		if (strsvArray[i].svType == 1)
 		{
-			for (int j = 0; j < dimlen1; j++)
+			delete2DArray_Contiguous(strsvArray[i].svArrayValues);
+			/*for (int j = 0; j < dimlen1; j++)
 				delete[] strsvArray[i].svArrayValues[j];
 			delete[] strsvArray[i].svArrayValues;
+			*/
 		}
 	}
 	delete[] strsvArray;

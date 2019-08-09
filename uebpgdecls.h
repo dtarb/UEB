@@ -86,9 +86,14 @@ int Write3DNC(const char* FileName, const char* VarName, const char *varUnits,  
 	const char* tUnits, const char* yUnits, const char* xUnits, int Nt_dim, int Ny_dim, int Nx_dim, int dimOrd, float* t_inp, float* y_inp, float* x_inp, float*** var_inp, MPI::Intracomm inpComm, MPI::Info inpInfo); // int &t_dimid, int &y_dimid, int &x_dimid) //time, y, x
 int read3DNC(const char* FILE_NAME, const char* VAR_NAME, const char* xcor_NAME, const char* ycor_NAME, const char* tcor_NAME, float* xcorvar, float* ycorvar, float* tcorvar, float*** pvar_in, MPI::Intracomm inpComm, MPI::Info inpInfo);
 int read2DNC(const char* FILE_NAME, const char* VAR_NAME, float** &pvar_in, MPI::Intracomm inpComm, MPI::Info inpInfo);
-//the following is to read watershed file
+//7.25.19 access with single file no mpi
+int read2DNC(const char* FILE_NAME, const char* VAR_NAME, float**& pvar_in);
+//read watershed file
 int readwsncFile(const char* FILE_NAME, const char* VAR_NAME, const char* ycor_NAME,  
 	const char* xcor_NAME, float* &ycorvar, float* &xcorvar, int** &pvar_in, int &ydim, int &xdim, int &fillVal, MPI::Intracomm inpComm, MPI::Info inpInfo);  // , std::set<int> zValues, float * z_ycor, float *z_xcor);
+//7.25.19 access with single process no mpi
+int readwsncFile(const char* FILE_NAME, const char* VAR_NAME, const char* ycor_NAME,
+	const char* xcor_NAME, float*& ycorvar, float*& xcorvar, int**& pvar_in, int& ydim, int& xdim, int& fillVal);       //, std::set<int> zValues,  float * z_ycor, float *z_xcor)
 int Write3DNC(const char* FILE_NAME, const char* VAR_NAME, const char* xcor_NAME, 
 	const char* ycor_NAME, const char* tcor_NAME, float* xcorvar, float* ycorvar, float* tcorvar, float*** pvar_out, MPI::Intracomm inpComm, MPI::Info inpInfo);
 //read 3d nc to contiguous array;  y,x,time coordinate names are same as index names
@@ -112,6 +117,10 @@ void delete2DArray_Contiguous(float** myMatrix);
 float*** create3DArrayblock_Contiguous(int nt, int nr, int nc);      //inputs: no. of rows and no. of colos , height/time (dimensions) of matrix
 //delets a 3D array (frees memory) allocated contiguously
 void delete3DArrayblock_Contiguous(float*** myMatrix); // int nr, int nc)// input: 3D array
+//for int
+int** create2DArray_Contiguous_int(int nr, int nc);
+//delets a 2D array (frees memory allocated) contiguously
+void delete2DArray_Contiguous_int(int** myMatrix);
 
 //ueb inputs
 void readParams(const char* inpFile, float* &parArray, const int nParams);

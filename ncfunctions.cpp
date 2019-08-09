@@ -1230,7 +1230,77 @@ int read2DNC(const char* FILE_NAME, const char* VAR_NAME, float** &pvar_in, MPI:
 
 	return 0;
 }
-//the following is to read watershed file
+//7.25.19 access with single file no mpi
+int read2DNC(const char* FILE_NAME, const char* VAR_NAME, float**& pvar_in)
+{
+	//ids for variable, axes,...
+	int retncval = 0, ncid = 0, pvarid = 0; // pxid = 0, pyid = 0, ndims = 0; 
+	//dimensions lengths
+	size_t Nxdim = 0, Nydim = 0;
+	//variable data type
+	nc_type varType;
+	//array of dimensions
+	int pdimids[2]; //NC_MAX_DIMS]; 2D file only being read here; expected to get error message otherwise
+	//size_t start[3], count[3];
+	//Open the file.  
+	if ((retncval = nc_open(FILE_NAME, NC_NOWRITE, &ncid)))
+		ERR(retncval);
+	// get variable id
+	if ((retncval = nc_inq_varid(ncid, VAR_NAME, &pvarid)))
+		ERR(retncval);
+	// Get the varids of the coordinate variables 	
+	/*if ((retncval = nc_inq_varid(ncid, ycor_NAME, &pyid)))
+		ERR(retncval);
+	if ((retncval = nc_inq_varid(ncid, xcor_NAME, &pxid)))
+		ERR(retncval); 	*/
+		//var information, checking the dimension array
+	if ((retncval = nc_inq_var(ncid, pvarid, NULL, &varType, NULL, pdimids, NULL)))
+		ERR(retncval);
+	//check dimension sizes
+	if ((retncval = nc_inq_dim(ncid, pdimids[0], NULL, &Nydim)))
+		ERR(retncval);
+	if ((retncval = nc_inq_dim(ncid, pdimids[1], NULL, &Nxdim)))
+		ERR(retncval);
+
+	//create the output arrays
+	pvar_in = create2DArray_Contiguous(Nydim, Nxdim);
+	/*new float* [Nydim];
+	for (size_t j = 0; j < Nydim; j++)
+		pvar_in[j] = new float[Nxdim];
+    */
+
+	float* ta_inp = new float[Nxdim];	  //8.14.13 from ...[Nydim]
+	size_t start[2], count[2];
+	start[0] = 0;
+	start[1] = 0;
+	count[0] = 1;
+	count[1] = Nxdim;
+	for (int nj = 0; nj < Nydim; nj++)
+	{
+		start[0] = nj;
+		if ((retncval = nc_get_vara_float(ncid, pvarid, start, count, &ta_inp[0])))
+			ERR(retncval);
+		for (int ix = 0; ix < Nxdim; ix++)
+			pvar_in[nj][ix] = ta_inp[ix];
+		//cout<<"step no %d\n",nj);
+	}	/* next record */
+	/*ycorvar = new float[Nydim];
+	xcorvar = new float[Nxdim];
+	// Read the coordinate (dimensions) variable data.
+	if ((retncval = nc_get_var_float(ncid, pyid, &ycorvar[0])))
+		ERR(retncval);
+	if ((retncval = nc_get_var_float(ncid, pxid, &xcorvar[0])))
+		ERR(retncval); */
+		//read variable (input data)	
+	   /*if ((retncval = nc_get_var_float(ncid, pvarid, &pvar_in[0][0])))
+			   ERR(retncval); 	*/
+			   //close netcdf file			
+	if ((retncval = nc_close(ncid)))
+		ERR(retncval);
+
+	return 0;
+}
+//read watershed file
 int readwsncFile(const char* FILE_NAME, const char* VAR_NAME, const char* ycor_NAME,  
 	const char* xcor_NAME, float* &ycorvar, float* &xcorvar, int** &pvar_in, int &ydim, int &xdim, int &fillVal, MPI::Intracomm inpComm, MPI::Info inpInfo)       //, std::set<int> zValues,  float * z_ycor, float *z_xcor)
 {
@@ -1320,6 +1390,96 @@ int readwsncFile(const char* FILE_NAME, const char* VAR_NAME, const char* ycor_N
 	//close netcdf file	
 	if ((retncval = nc_close(ncid))) 
 		ERR(retncval); 
+
+	return 0;
+}
+//7.25.19 access with single process no mpi
+int readwsncFile(const char* FILE_NAME, const char* VAR_NAME, const char* ycor_NAME,
+	const char* xcor_NAME, float*& ycorvar, float*& xcorvar, int**& pvar_in, int& ydim, int& xdim, int& fillVal)       //, std::set<int> zValues,  float * z_ycor, float *z_xcor)
+{
+	//ids for variable, axes,...
+	int retncval = 0, ncid = 0, pvarid = 0, pxid = 0, pyid = 0, ndims = 0;
+	//dimensions lengths
+	size_t Nxdim = 0, Nydim = 0;
+	int fillSet = 0;
+	//variable data type
+	nc_type varType, missingType;
+	//array of dimensions
+	int pdimids[2]; //NC_MAX_DIMS]; 2D file only being read here; expected to get error message otherwise
+	//size_t start[3], count[3];
+	//Open the file.  
+	if ((retncval = nc_open(FILE_NAME, NC_NOWRITE, &ncid)))
+		ERR(retncval);
+	// get variable id
+	if ((retncval = nc_inq_varid(ncid, VAR_NAME, &pvarid)))
+		ERR(retncval);
+	// Get the varids of the coordinate variables 	
+	if ((retncval = nc_inq_varid(ncid, ycor_NAME, &pyid)))
+		ERR(retncval);
+	if ((retncval = nc_inq_varid(ncid, xcor_NAME, &pxid)))
+		ERR(retncval);
+	//var information, checking the dimension array
+	if ((retncval = nc_inq_var(ncid, pvarid, NULL, &varType, NULL, pdimids, NULL)))
+		ERR(retncval);
+	//Arcgis uses "missing_vaue TBC # 12.18.14 
+	//CF Convension use _FillValue
+	if ((retncval = nc_get_att(ncid, pvarid, "_FillValue", &fillVal)))
+		ERR(retncval);
+	//cout<<"_FillValue: "<<fillVal<<endl;
+	/*int iMiss;
+	 if ((retncval = nc_inq_var_fill(ncid,pvarid, &fillSet,&iMiss)))
+			ERR(retncval);
+	cout<<" Fill value: "<<iMiss<<endl;
+	cout<<" Fill set? "<<fillSet<<endl;*/
+
+	//check dimension sizes
+	if ((retncval = nc_inq_dim(ncid, pdimids[0], NULL, &Nydim)))
+		ERR(retncval);
+	if ((retncval = nc_inq_dim(ncid, pdimids[1], NULL, &Nxdim)))
+		ERR(retncval);
+	//get dim values
+	ydim = (int)Nydim;
+	xdim = (int)Nxdim;
+
+	//create the output arrays
+	/*pvar_in = new int* [Nydim];
+	for (size_t j = 0; j < Nydim; j++)
+		pvar_in[j] = new int[Nxdim];
+	*/
+//7.26.19
+	pvar_in = create2DArray_Contiguous_int(Nydim, Nxdim);
+
+	ycorvar = new float[Nydim];
+	xcorvar = new float[Nxdim];
+	//
+	// Read the coordinate (dimensions) variable data.  
+	if ((retncval = nc_get_var_float(ncid, pyid, &ycorvar[0])))
+		ERR(retncval);
+	if ((retncval = nc_get_var_float(ncid, pxid, &xcorvar[0])))
+		ERR(retncval);
+	//read variable (input data)	
+	int* ta_inp = new int[Nxdim];	 //8913 frm size of nydim
+	size_t start[2], count[2];
+	start[0] = 0;
+	start[1] = 0;
+	count[0] = 1;
+	count[1] = Nxdim;
+
+	for (int nj = 0; nj < Nydim; nj++)
+	{
+		start[0] = nj;
+		if ((retncval = nc_get_vara_int(ncid, pvarid, start, count, &ta_inp[0])))
+			ERR(retncval);
+		for (int ix = 0; ix < Nxdim; ix++)
+			pvar_in[nj][ix] = ta_inp[ix];
+		//cout<<"step no %d\n",nj);
+	}	/* next record */
+	//cout<<endl;
+	/*if ((retncval = nc_get_vara_int(ncid, pvarid,start,count, &pvar_in[0][0])))
+			ERR(retncval); 	*/
+			//close netcdf file	
+	if ((retncval = nc_close(ncid)))
+		ERR(retncval);
 
 	return 0;
 }
