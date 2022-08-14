@@ -3,33 +3,41 @@
 # include "uebpgdecls.h"
 //**********************************************************************************************
 //
-//  Copyright (C) 2012  David Tarboton, Utah State University, dtarb@usu.edu.  http://www.engineering.usu.edu/dtarb
+//  Copyright (C) 2012  David Tarboton, Utah State University, dtarb@usu.edu.  http://hydrology.usu.edu/dtarb
 //
 //  This file is part of UEB.
 //
-//    UEB is free software: you can redistribute it and/or modify
-//    it under the terms of the GNU General Public License as published by
-//    the Free Software Foundation, either version 3 of the License, or
-//    (at your option) any later version.
+//    UEB is open source software: you can redistribute it and/or modify it under the terms of the 
+//    MIT Open Source License as published by the Open Source Initiative https://opensource.org/licenses/MIT.
 //
-//    UEB is distributed in the hope that it will be useful,
-//    but WITHOUT ANY WARRANTY; without even the implied warranty of
-//    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//    GNU General Public License for more details.
+//    Permission is hereby granted, free of charge, to any person obtaining a copy
+//   of this software and associated documentation files (the "Software"), to deal
+//   in the Software without restriction, including without limitation the rights
+//   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+//   copies of the Software, and to permit persons to whom the Software is
+//   furnished to do so, subject to the following conditions:
 //
-//    A copy of the GNU General Public License is included in the file gpl.txt.
-//    This is also available at: http://www.gnu.org/licenses/.
+//   The above copyright notice and this permission notice shall be included in all
+//    copies or substantial portions of the Software.
 //
-//  ifyou wish to use or incorporate this program (or parts of it) into 
-//  other software that does not meet the GNU General Public License 
-//  conditions contact the author to request permission.
-//  David G. Tarboton  
-//  Utah State University 
-//  8200 Old Main Hill 
-//  Logan, UT 84322-8200 
-//  USA 
-//  http://www.engineering.usu.edu/dtarb/ 
-//  email:  dtarb@usu.edu 
+//   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+//   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+//   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+//   AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+//   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+//   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+//   SOFTWARE.
+//
+// If you wish to use or incorporate this program (or parts of it) into 
+// other software that does not meet the MIT Open Source License 
+// conditions contact the author to request permission.
+// David G. Tarboton  
+// Utah State University 
+// 8200 Old Main Hill 
+// Logan, UT 84322-8200 
+// USA 
+// http://hydrology.edu/dtarb/ 
+// email:  dtarb@usu.edu 
 //
 //**********************************************************************************************  
 // Definitions
